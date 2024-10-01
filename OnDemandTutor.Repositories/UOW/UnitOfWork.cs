@@ -1,4 +1,4 @@
-﻿using OnDemandTutor.Contract.Repositories.Entity;
+using OnDemandTutor.Contract.Repositories.Entity;
 using OnDemandTutor.Contract.Repositories.Interface;
 using OnDemandTutor.Contract.Repositories.IUOW;
 using OnDemandTutor.Repositories.Context;
@@ -8,80 +8,93 @@ namespace OnDemandTutor.Repositories.UOW
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private bool disposed = false; // Biến để kiểm tra xem đối tượng đã được giải phóng hay chưa
-        private readonly DatabaseContext _dbContext; // Bối cảnh cơ sở dữ liệu
+        private bool disposed = false;
+        private readonly DatabaseContext _dbContext;
 
-        public UnitOfWork(DatabaseContext dbContext) // Constructor
+        public UnitOfWork(DatabaseContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        private IGenericRepository<Schedule> _scheduleRepository; // Repository cho Schedule
+        private IGenericRepository<Schedule> scheduleRepository;
         public IGenericRepository<Schedule> ScheduleRepository
         {
             get
             {
-                if (_scheduleRepository == null)
+                if (scheduleRepository == null)
                 {
-                    _scheduleRepository = new GenericRepository<Schedule>(_dbContext);
+                    scheduleRepository = new GenericRepository<Schedule>(_dbContext);
                 }
-                return _scheduleRepository;
+                return scheduleRepository;
             }
         }
 
-        private IGenericRepository<TutorSubject> _tutorRepository; // Repository cho TutorSubject
+        private IGenericRepository<TutorSubject> tutorRepository;
         public IGenericRepository<TutorSubject> TutorRepository
         {
             get
             {
-                if (_tutorRepository == null)
+                if (tutorRepository == null)
                 {
-                    _tutorRepository = new GenericRepository<TutorSubject>(_dbContext);
+                    tutorRepository = new GenericRepository<TutorSubject>(_dbContext);
                 }
-                return _tutorRepository;
+                return tutorRepository;
             }
         }
 
-        private IGenericRepository<Feedback> _feedbackRepository; // Repository cho Feedback
+        private IGenericRepository<Feedback> feedbackRepository;
         public IGenericRepository<Feedback> FeedbackRepository
         {
             get
             {
-                if (_feedbackRepository == null)
+                if (feedbackRepository == null)
                 {
-                    _feedbackRepository = new GenericRepository<Feedback>(_dbContext);
+                    feedbackRepository = new GenericRepository<Feedback>(_dbContext);
                 }
-                return _feedbackRepository;
+                return feedbackRepository;
+            }
+        }
+        public IGenericRepository<Slot> slotRepository;
+
+        public IGenericRepository<Slot> SlotRepository
+        {
+            get
+            {
+                if (this.slotRepository == null)
+                {
+                    this.slotRepository = new GenericRepository<Slot>(_dbContext);
+                }
+                return slotRepository;
             }
         }
 
-        private IGenericRepository<Subject> _subjectRepository; // Repository cho Subject
+        private IGenericRepository<Subject> subjectRepository;
         public IGenericRepository<Subject> SubjectRepository
         {
             get
             {
-                if (_subjectRepository == null)
+                if (subjectRepository == null)
                 {
-                    _subjectRepository = new GenericRepository<Subject>(_dbContext);
+                    subjectRepository = new GenericRepository<Subject>(_dbContext);
                 }
-                return _subjectRepository;
+                return subjectRepository;
             }
         }
 
-        private IGenericRepository<Complaint> _complaintRepository; // Repository cho Complaint
+        private IGenericRepository<Complaint> complaintRepository;
         public IGenericRepository<Complaint> ComplaintRepository
         {
             get
             {
-                if (_complaintRepository == null)
+                if (complaintRepository == null)
                 {
-                    _complaintRepository = new GenericRepository<Complaint>(_dbContext);
+                    complaintRepository = new GenericRepository<Complaint>(_dbContext);
                 }
-                return _complaintRepository;
+                return complaintRepository;
             }
         }
 
-        public void BeginTransaction() // Bắt đầu giao dịch
+
         public IGenericRepository<Class> classRepository;
         public IGenericRepository<Class> ClassRepository
         {
@@ -112,7 +125,7 @@ namespace OnDemandTutor.Repositories.UOW
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing) // Phương thức giải phóng tài nguyên
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
             {
@@ -124,22 +137,22 @@ namespace OnDemandTutor.Repositories.UOW
             disposed = true;
         }
 
-        public void RollBack() // Hoàn tác giao dịch
+        public void RollBack()
         {
             _dbContext.Database.RollbackTransaction();
         }
 
-        public void Save() // Lưu thay đổi
+        public void Save()
         {
             _dbContext.SaveChanges();
         }
 
-        public async Task SaveAsync() // Lưu thay đổi không đồng bộ
+        public async Task SaveAsync()
         {
             await _dbContext.SaveChangesAsync();
         }
 
-        public IGenericRepository<T> GetRepository<T>() where T : class // Lấy repository cho loại thực thể cụ thể
+        public IGenericRepository<T> GetRepository<T>() where T : class
         {
             return new GenericRepository<T>(_dbContext);
         }
