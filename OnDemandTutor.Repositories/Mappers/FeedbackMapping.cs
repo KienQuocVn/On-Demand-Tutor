@@ -16,11 +16,12 @@ namespace OnDemandTutor.Repositories.Mappers
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString("N")))
             .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => DateTimeOffset.Now))
             .ForMember(dest => dest.LastUpdatedTime, opt => opt.MapFrom(src => DateTimeOffset.Now));
-            
-            CreateMap<UpdateFeedbackModelViews , Feedback>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString("N")))
-            .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => DateTimeOffset.Now))
-            .ForMember(dest => dest.LastUpdatedTime, opt => opt.MapFrom(src => DateTimeOffset.Now));
+
+            CreateMap<UpdateFeedbackModelViews, Feedback>()
+             .ForMember(dest => dest.Id, opt => opt.Ignore()) // Không ánh xạ lại Id
+             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Không thay đổi CreatedAt
+             .ForMember(dest => dest.LastUpdatedTime, opt => opt.MapFrom(src => DateTime.Now)); // Chỉ cập nhật LastUpdatedTime
+
         }
     }
 }

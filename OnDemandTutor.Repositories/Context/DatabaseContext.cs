@@ -107,43 +107,17 @@ namespace OnDemandTutor.Repositories.Context
 
             // Cấu hình mối quan hệ cho Feedback  
 
+            //modelBuilder.Entity<Feedback>()
+            //    .HasKey(f => new { f.StudentId, f.TutorId }); // Khóa chính cho Feedback  
+
             modelBuilder.Entity<Feedback>()
-                .HasKey(f => new { f.StudentId, f.TutorId }); // Khóa chính cho Feedback  
+                .HasKey(f => f.Id);
 
             modelBuilder.Entity<Feedback>()
                 .HasOne(f => f.Slot) // Mối quan hệ với Slot  
                 .WithMany(s => s.Feedbacks)
                 .HasForeignKey(f => f.SlotId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Feedback>()
-
-               .HasOne(ts => ts.Accounts)
-                .WithMany(s => s.Feedbacks)
-                .HasForeignKey(ts => ts.TutorId);
-
-            // Booking relationships
-            modelBuilder.Entity<Booking>()
-                .HasKey(b => b.Id);
-
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Student)
-                .WithMany(s => s.Bookings)
-                .HasForeignKey(b => b.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Subject)
-                .WithMany(s => s.Bookings)
-                .HasForeignKey(b => b.SubjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.TutorSubject)
-                .WithMany(ts => ts.Bookings)
-                .HasForeignKey(b => b.TutorSubjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
 
             modelBuilder.Entity<Feedback>()
                .HasOne(f => f.Accounts) // Mối quan hệ với Accounts  
@@ -154,6 +128,30 @@ namespace OnDemandTutor.Repositories.Context
                 .HasOne(f => f.Accounts) // Mối quan hệ với Tutor  
                 .WithMany(a => a.Feedbacks)
                 .HasForeignKey(f => f.TutorId);
+            // Booking relationships
+            //modelBuilder.Entity<Booking>()
+            //    .HasKey(b => b.Id);
+
+            //modelBuilder.Entity<Booking>()
+            //    .HasOne(b => b.Student)
+            //    .WithMany(s => s.Bookings)
+            //    .HasForeignKey(b => b.StudentId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //modelBuilder.Entity<Booking>()
+            //    .HasOne(b => b.Subject)
+            //    .WithMany(s => s.Bookings)
+            //    .HasForeignKey(b => b.SubjectId)  
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //modelBuilder.Entity<Booking>()
+            //    .HasOne(b => b.TutorSubject)
+            //    .WithMany(ts => ts.Bookings)
+            //    .HasForeignKey(b => b.TutorSubjectId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+
+
 
             // Cấu hình mối quan hệ cho Slot  
             modelBuilder.Entity<Slot>()

@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace OnDemandTutor.ModelViews.SLotModelViews
 {
-    public class SlotModelView
+    public class UpdateSlotModelView
     {
         public string ClassId { get; set; }
         public string DayOfSlot { get; set; }
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
         public double Price { get; set; }
     }
 }

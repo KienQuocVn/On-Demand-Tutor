@@ -9,7 +9,7 @@ namespace OnDemandTutor.ModelViews.Booking
     
         public class BookingDto
         {
-            public string StudentId { get; set; }
+            public Guid StudentId { get; set; } // thay đổi
             public string SubjectId { get; set; }
             public string TutorSubjectId { get; set; }
         }

@@ -18,12 +18,12 @@ namespace OnDemandTutor.API.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<ActionResult<Slot>> GetAllSlotByFilter(int pageNumber, int pageSize, string? classId, string? dayOfSlot, TimeSpan? StartTime, TimeSpan? endTime, double? price)
+        public async Task<ActionResult<Slot>> GetAllSlotByFilter(int pageNumber, int pageSize, string? id, string? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
         {
             try
             {
                 // Gọi service để lấy slot theo bộ lọc
-                var slot = await _slotService.GetAllSlotByFilterAsync(pageNumber, pageSize, classId, dayOfSlot, StartTime, endTime, price);
+                var slot = await _slotService.GetAllSlotByFilterAsync(pageNumber, pageSize, id, classId, StartTime, endTime, price);
 
                 // Trả về kết quả slot
                 return Ok(slot);
@@ -55,7 +55,7 @@ namespace OnDemandTutor.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi Post slot.", details = ex.ToString() });
+                return BadRequest(new { Message = ex.Message });
             }
         }
 

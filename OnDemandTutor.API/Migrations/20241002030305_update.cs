@@ -414,45 +414,52 @@ namespace OnDemandTutor.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Feedbacks",
-                columns: table => new
-                {
-                    StudentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TutorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FeedbackText = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SlotId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    NumberOfViolations = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ClassId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    Id = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DeletedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    LastUpdatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DeletedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Feedbacks", x => new { x.StudentId, x.TutorId });
-                    table.ForeignKey(
-                        name: "FK_Feedbacks_AspNetUsers_TutorId",
-                        column: x => x.TutorId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Feedbacks_Classes_ClassId",
-                        column: x => x.ClassId,
-                        principalTable: "Classes",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Feedbacks_Slots_SlotId",
-                        column: x => x.SlotId,
-                        principalTable: "Slots",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+             name: "Feedbacks",
+             columns: table => new
+             {
+                 Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false), // Đổi sang Guid
+                 StudentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                 TutorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                 FeedbackText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                 SlotId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                 NumberOfViolations = table.Column<int>(type: "int", nullable: false),
+                 CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                 ClassId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                 CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                 LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                 DeletedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                 CreatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                 LastUpdatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                 DeletedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+             },
+             constraints: table =>
+             {
+                 table.PrimaryKey("PK_Feedbacks", x => x.Id); // Chỉ định Id là khóa chính
+                 table.ForeignKey(
+                     name: "FK_Feedbacks_AspNetUsers_StudentId",
+                     column: x => x.StudentId,
+                     principalTable: "AspNetUsers",
+                     principalColumn: "Id",
+                     onDelete: ReferentialAction.Cascade);
+                 table.ForeignKey(
+                     name: "FK_Feedbacks_AspNetUsers_TutorId",
+                     column: x => x.TutorId,
+                     principalTable: "AspNetUsers",
+                     principalColumn: "Id",
+                     onDelete: ReferentialAction.NoAction);
+                 table.ForeignKey(
+                     name: "FK_Feedbacks_Classes_ClassId",
+                     column: x => x.ClassId,
+                     principalTable: "Classes",
+                     principalColumn: "Id");
+                 table.ForeignKey(
+                     name: "FK_Feedbacks_Slots_SlotId",
+                     column: x => x.SlotId,
+                     principalTable: "Slots",
+                     principalColumn: "Id",
+                     onDelete: ReferentialAction.Restrict);
+             });
+
 
             migrationBuilder.CreateTable(
                 name: "Schedules",

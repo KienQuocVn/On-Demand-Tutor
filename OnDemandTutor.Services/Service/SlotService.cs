@@ -33,26 +33,21 @@ namespace OnDemandTutor.Services.Service
                 throw new Exception("Không tìm thấy class! Hãy thử lại");
             }
 
-            //if (string.IsNullOrEmpty(model.ClassId) || !Guid.TryParse(model.ClassId, out Guid classGuid))
-            //{
-            //    throw new ArgumentException("ClassId không hợp lệ.");
-            //}
-
-            // Kiểm tra định dạng StartTime và EndTime
-            if (!TimeSpan.TryParse(model.StartTime, out TimeSpan startTime))
-            {
-                throw new FormatException("Định dạng StartTime phải là 00:00:00. ");
-            }
-
-            if (!TimeSpan.TryParse(model.EndTime, out TimeSpan endTime))
-            {
-                throw new FormatException("Định dạng EndTime phải là 00:00:00. ");
-            }
-
             // Kiểm tra xem StartTime có nhỏ hơn EndTime không
-            if (startTime >= endTime)
+            if (model.StartTime >= model.EndTime)
             {
                 throw new ArgumentException("StartTime phải nhỏ hơn EndTime.");
+            }
+            // Kiểm tra trùng thời gian với slot khác trong cùng class
+            bool isDuplicateTime = await _unitOfWork.SlotRepository.Entities
+                .AnyAsync(s => s.ClassId == model.ClassId
+                               && s.StartTime == model.StartTime
+                               && s.EndTime == model.EndTime
+                               && !s.DeletedTime.HasValue);
+
+            if (isDuplicateTime)
+            {
+                throw new Exception("Đã tồn tại slot với thời gian trùng lặp trong class này!");
             }
 
             var slot = _mapper.Map<Slot>(model);
@@ -76,6 +71,137 @@ namespace OnDemandTutor.Services.Service
 
             return slot;
         }
+        public async Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber, int pageSize, string? id, string? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
+        {
+            IQueryable<Slot> SlotQuerys = _unitOfWork.GetRepository<Slot>().Entities
+                           .Where(p => !p.DeletedTime.HasValue) // Lọc Slot chưa bị xóa mềm
+                           .OrderByDescending(p => p.CreatedTime);
+
+            // Điều kiện tìm kiếm theo id slot
+            if (!string.IsNullOrEmpty(id))
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.Id == id);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy ID Slot");
+                }
+            }
+            // Điều kiện tìm kiếm theo classId
+            if (!string.IsNullOrEmpty(classId))
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.ClassId == classId);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Slot với classId");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo StartTime
+            if (StartTime.HasValue && !endTime.HasValue)
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.StartTime >= StartTime.Value);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException($"Không tìm thấy Slot với StartTime lớn hơn hoặc bằng: {StartTime.Value}.");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo EndTime
+            if (endTime.HasValue && !StartTime.HasValue)
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.EndTime <= endTime.Value);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException($"Không tìm thấy Slot với EndTime nhỏ hơn hoặc bằng: {endTime.Value}.");
+                }
+            }
+
+            // Điều kiện tìm kiếm khi cả StartTime và EndTime đều có giá trị
+            if (endTime.HasValue && StartTime.HasValue)
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.StartTime >= StartTime.Value && p.EndTime <= endTime.Value);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException($"Không tìm thấy Slot khoảng thời gian từ {StartTime.Value} đến {endTime.Value}.");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo giá
+            if (price.HasValue)
+            {
+                SlotQuerys = SlotQuerys.Where(p => p.Price == price.Value);
+
+                if (!await SlotQuerys.AnyAsync())
+                {
+                    throw new KeyNotFoundException($"Không tìm thấy Slot với giá: {price.Value}.");
+                }
+            }
+
+            // Tính tổng số lượng bản ghi sau khi lọc
+            int totalCount = await SlotQuerys.CountAsync();
+
+            // Phân trang
+            var slot = await SlotQuerys
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new BasePaginatedList<Slot>(slot, totalCount, pageNumber, pageSize);
+        }
+
+
+
+        public async Task<Slot> UpdateSlotAsync(string id, SlotModelView model)
+        {
+
+            var slot = await _unitOfWork.SlotRepository.Entities
+                .FirstOrDefaultAsync(s => s.Id == id && !s.DeletedTime.HasValue);
+
+            // kiểm tra slot có tồn tại hay không
+            if (slot == null) {
+                throw new Exception("Không tìm thấy slot! Hãy thử lại");
+            }
+            // Kiểm tra classId có tồn tại hay không
+            var classEntity = await _unitOfWork.GetRepository<Class>().Entities
+                .FirstOrDefaultAsync(c => c.Id == model.ClassId);
+
+            if (classEntity == null)
+            {
+                throw new KeyNotFoundException("Không tìm thấy class với ID đã cho.");
+            }
+
+            // Kiểm tra xem StartTime có nhỏ hơn EndTime không
+            if (model.StartTime >= model.EndTime)
+            {
+                throw new ArgumentException("StartTime phải nhỏ hơn EndTime.");
+            }
+
+            // Kiểm tra trùng thời gian với slot khác trong cùng class
+            bool isDuplicateTime = await _unitOfWork.SlotRepository.Entities
+                .AnyAsync(s => s.ClassId == model.ClassId
+                               && s.StartTime == model.StartTime
+                               && s.EndTime == model.EndTime
+                               && s.Id != id // Đảm bảo không so sánh với slot hiện tại
+                               && !s.DeletedTime.HasValue);
+
+            if (isDuplicateTime)
+            {
+                throw new Exception("Đã tồn tại slot với thời gian trùng lặp trong class này!");
+            }
+
+            _mapper.Map(model, slot);
+            slot.LastUpdatedBy = "admin"; // ví dụ: lấy thông tin từ xác thực
+            slot.LastUpdatedTime = DateTimeOffset.Now; // Cập nhật thời gian sửa đổi
+
+            await _unitOfWork.SaveAsync();
+
+            return slot;
+        }
 
         public async Task<bool> DeleteSlotAsync(string id)
         {
@@ -90,52 +216,11 @@ namespace OnDemandTutor.Services.Service
 
                 return true; // Trả về true nếu xóa thành công
             }
+            else
+            {
+                throw new Exception("Không tìm thấy Slot hoặc đã bị xóa!");
+            }
             return false;
-        }
-
-        public async Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber, int pageSize, string? classId, string? dayOfSlot, TimeSpan? StartTime, TimeSpan? endTime, double? price)
-        {
-            IQueryable<Slot> SlotQuerys = _unitOfWork.GetRepository<Slot>().Entities
-                           .Where(p => !p.DeletedTime.HasValue) // Lọc Slot chưa bị xóa mềm
-                           .OrderByDescending(p => p.CreatedTime); 
-
-            // Điều kiện tìm kiếm class
-            if (!string.IsNullOrEmpty(classId))
-            {
-                SlotQuerys = SlotQuerys.Where(p => p.ClassId == classId);
-            }
-
-            //return Slot;
-            int totalCount = await SlotQuerys.CountAsync();
-            var slot = await SlotQuerys
-                .Skip((pageNumber - 1) * pageSize) // Phân trang
-                .Take(pageSize)
-                .ToListAsync();
-            if (slot == null)
-            {
-                throw new KeyNotFoundException("Không tìm thấy Slot với những thông tin trên.");
-            }
-            return new BasePaginatedList<Slot>(slot, totalCount, pageNumber, pageSize);
-        }
-
-        public async Task<Slot> UpdateSlotAsync(string id, SlotModelView model)
-        {
-
-            var slot = await _unitOfWork.SlotRepository.Entities
-                .FirstOrDefaultAsync(s => s.Id == id && !s.DeletedTime.HasValue);
-
-            // kiểm tra slot có tồn tại hay không
-            if (slot == null) {
-                throw new Exception("Không tìm thấy slot! Hãy thử lại");
-            }
-
-            _mapper.Map(model, slot);
-            slot.LastUpdatedBy = "admin"; // ví dụ: lấy thông tin từ xác thực
-            slot.LastUpdatedTime = DateTimeOffset.Now; // Cập nhật thời gian sửa đổi
-
-            await _unitOfWork.SaveAsync();
-
-            return slot;
         }
     }
 }

@@ -261,6 +261,60 @@ namespace OnDemandTutor.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Booking", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SubjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TutorSubjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TutorSubjectTutorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TutorSubjectUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("TutorSubjectTutorId", "TutorSubjectUserId");
+
+                    b.ToTable("Bookings");
+                });
+
             modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Class", b =>
                 {
                     b.Property<string>("Id")
@@ -368,10 +422,10 @@ namespace OnDemandTutor.API.Migrations
 
             modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Feedback", b =>
                 {
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("TutorId")
+                    b.Property<Guid>("AccountsId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ClassId")
@@ -396,9 +450,6 @@ namespace OnDemandTutor.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LastUpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -412,13 +463,19 @@ namespace OnDemandTutor.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("StudentId", "TutorId");
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TutorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountsId");
 
                     b.HasIndex("ClassId");
 
                     b.HasIndex("SlotId");
-
-                    b.HasIndex("TutorId");
 
                     b.ToTable("Feedbacks");
                 });
@@ -840,6 +897,33 @@ namespace OnDemandTutor.API.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Booking", b =>
+                {
+                    b.HasOne("OnDemandTutor.Repositories.Entity.Accounts", "Student")
+                        .WithMany("Bookings")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnDemandTutor.Contract.Repositories.Entity.Subject", "Subject")
+                        .WithMany("Bookings")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnDemandTutor.Contract.Repositories.Entity.TutorSubject", "TutorSubject")
+                        .WithMany("Bookings")
+                        .HasForeignKey("TutorSubjectTutorId", "TutorSubjectUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("TutorSubject");
+                });
+
             modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Class", b =>
                 {
                     b.HasOne("OnDemandTutor.Repositories.Entity.Accounts", "account")
@@ -882,6 +966,12 @@ namespace OnDemandTutor.API.Migrations
 
             modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Feedback", b =>
                 {
+                    b.HasOne("OnDemandTutor.Repositories.Entity.Accounts", "Accounts")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("AccountsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("OnDemandTutor.Contract.Repositories.Entity.Class", null)
                         .WithMany("Feedbacks")
                         .HasForeignKey("ClassId");
@@ -890,12 +980,6 @@ namespace OnDemandTutor.API.Migrations
                         .WithMany("Feedbacks")
                         .HasForeignKey("SlotId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("OnDemandTutor.Repositories.Entity.Accounts", "Accounts")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("TutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Accounts");
@@ -990,13 +1074,22 @@ namespace OnDemandTutor.API.Migrations
 
             modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.Subject", b =>
                 {
+                    b.Navigation("Bookings");
+
                     b.Navigation("Classes");
 
                     b.Navigation("TutorSubjects");
                 });
 
+            modelBuilder.Entity("OnDemandTutor.Contract.Repositories.Entity.TutorSubject", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
             modelBuilder.Entity("OnDemandTutor.Repositories.Entity.Accounts", b =>
                 {
+                    b.Navigation("Bookings");
+
                     b.Navigation("Classes");
 
                     b.Navigation("Complaints");

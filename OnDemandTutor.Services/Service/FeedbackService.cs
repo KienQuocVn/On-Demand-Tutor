@@ -56,25 +56,48 @@ namespace OnDemandTutor.Services.Service
 
             if (!isExistSlot)
             {
-                throw new Exception("Không tìm thấy Slot! Hãy thử lại");
+                throw new Exception("Không tìm thấy Buổi học! Hãy thử lại");
             }
+
+            //Kiểm tra sự tồn tại của Class
+            bool isExistClass = await _unitOfWork.GetRepository<Class>().Entities
+                .AnyAsync(s => s.Id == model.ClassId && !s.DeletedTime.HasValue);
+
+            if (!isExistClass)
+            {
+                throw new Exception("Không tìm thấy Lớp học! Hãy thử lại");
+            }
+
+            var feedback = _mapper.Map<Feedback>(model);
+
 
             // Kiểm tra xem Student đã feedback cho Tutor này chưa
             var feedbackExists = await _unitOfWork.FeedbackRepository.Entities
-                .AnyAsync(f => f.StudentId == model.StudentId && 
-                f.TutorId == model.TutorId && 
-               !f.DeletedTime.HasValue && 
-                f.SlotId == model.SlotId);
+                .AnyAsync(f => f.StudentId == model.StudentId &&
+                f.TutorId == model.TutorId &&
+               !f.DeletedTime.HasValue &&
+                f.SlotId == model.SlotId &&
+                f.ClassId == model.ClassId);
+            var feedbackHasDelete = await _unitOfWork.FeedbackRepository.Entities
+                .FirstOrDefaultAsync(f => f.StudentId == model.StudentId &&
+                f.TutorId == model.TutorId &&
+                f.DeletedTime.HasValue &&
+                f.SlotId == model.SlotId&&
+                f.ClassId == model.ClassId);
+
+            if (feedbackHasDelete != null) {
+                feedbackHasDelete.DeletedTime = null;
+                feedbackHasDelete.CreatedTime = DateTimeOffset.Now;
+                await _unitOfWork.SaveAsync();
+                return feedbackHasDelete;
+            }
 
             if (feedbackExists)
             {
                 throw new Exception("Sinh viên đã phản hồi đến gia sư này.");
             }
-
-            var feedback = _mapper.Map<Feedback>(model);
-
             // Thiết lập các thuộc tính còn lại
-            feedback.Id = Guid.NewGuid().ToString("N");
+            feedback.Id = Guid.NewGuid(); 
             feedback.CreatedTime = DateTimeOffset.Now;
             feedback.LastUpdatedTime = DateTimeOffset.Now;
 
@@ -85,42 +108,77 @@ namespace OnDemandTutor.Services.Service
             return feedback;
         }
 
-        public async Task<BasePaginatedList<Feedback>> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, string? slotId, Guid? studentId, Guid? tutorId, string? feedbackId)
+        public async Task<BasePaginatedList<Feedback>> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, string? slotId,string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
-            IQueryable<Feedback> FeedbacksQuery = _unitOfWork.GetRepository<Feedback>().Entities
+            IQueryable<Feedback> feedbackQuery = _unitOfWork.GetRepository<Feedback>().Entities
                 .Where(p => p.DeletedTime.HasValue)  // Lấy feedback đã bị xóa mềm
                 .OrderByDescending(p => p.CreatedTime);
-       
-            // Điều kiện tìm kiếm theo StudentId, TutorId, FeedbackId
+
+            // Điều kiện tìm kiếm theo StudentId
             if (studentId.HasValue && studentId != Guid.Empty)
-                FeedbacksQuery = FeedbacksQuery.Where(p => p.StudentId == studentId);
+            {
+                feedbackQuery = feedbackQuery.Where(p => p.StudentId == studentId.Value);
 
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với StudentId.");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo TutorId
             if (tutorId.HasValue && tutorId != Guid.Empty)
-                FeedbacksQuery = FeedbacksQuery.Where(p => p.TutorId == tutorId);
+            {
+                feedbackQuery = feedbackQuery.Where(p => p.TutorId == tutorId.Value);
 
-            // kiểm tra xem slot có tồn tại hay không
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với TutorId.");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo SlotId
             if (!string.IsNullOrEmpty(slotId))
             {
-                FeedbacksQuery = FeedbacksQuery.Where(p => p.Slot.Id == slotId);
+                feedbackQuery = feedbackQuery.Where(p => p.Slot.Id == slotId);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với SlotId.");
+                }
             }
 
-            // kiểm tra xem feedback có tồn tại hay không
-            if (!string.IsNullOrEmpty(feedbackId))
-                FeedbacksQuery = FeedbacksQuery.Where(p => p.Id == feedbackId);
+            // Điều kiện tìm kiếm theo ClassId
+            if (!string.IsNullOrEmpty(classId))
+            {
+                feedbackQuery = feedbackQuery.Where(p => p.Class.Id == classId);
 
-            int totalCount = await FeedbacksQuery.CountAsync();
-            var feedback = await FeedbacksQuery
-                .Skip((pageNumber - 1) * pageSize) // Phân trang
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với ClassId.");
+                }
+            }
+
+            // Điều kiện tìm kiếm theo FeedbackId
+            if (feedbackId.HasValue && feedbackId != Guid.Empty)
+            {
+                feedbackQuery = feedbackQuery.Where(p => p.Id == feedbackId.Value);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với FeedbackId.");
+                }
+            }
+            // Tính tổng số lượng bản ghi sau khi lọc
+            int totalCount = await feedbackQuery.CountAsync();
+            //phân trang
+            var feedback = await feedbackQuery
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            if (feedback == null)
-            {
-                throw new KeyNotFoundException("Không tìm thấy Feedback với những thông tin trên.");
-            }
             return new BasePaginatedList<Feedback>(feedback, totalCount, pageNumber, pageSize);
         }
 
-        public async Task<BasePaginatedList<Feedback>> GetFeedbackByFilterAsync(int pageNumber, int pageSize ,string? slotId, Guid? studentId, Guid? tutorId, string? feedbackId)
+        public async Task<BasePaginatedList<Feedback>> GetFeedbackByFilterAsync(int pageNumber, int pageSize, string? slotId, string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
             IQueryable<Feedback> feedbackQuery = _unitOfWork.GetRepository<Feedback>().Entities
                 .Where(p => !p.DeletedTime.HasValue);  // Lọc feedback chưa bị xóa mềm
@@ -129,41 +187,80 @@ namespace OnDemandTutor.Services.Service
             if (studentId.HasValue && studentId != Guid.Empty)
             {
                 feedbackQuery = feedbackQuery.Where(p => p.StudentId == studentId.Value);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với StudentId.");
+                }
             }
 
+            // Điều kiện tìm kiếm theo TutorId
             if (tutorId.HasValue && tutorId != Guid.Empty)
             {
-                // Nếu không có studentId, tìm theo TutorId
                 feedbackQuery = feedbackQuery.Where(p => p.TutorId == tutorId.Value);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với TutorId.");
+                }
             }
-            // Điều kiện tìm kiếm theo FeedbackId nếu có
+
+            // Điều kiện tìm kiếm theo SlotId
             if (!string.IsNullOrEmpty(slotId))
             {
                 feedbackQuery = feedbackQuery.Where(p => p.Slot.Id == slotId);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với SlotId.");
+                }
             }
-            // Điều kiện tìm kiếm theo FeedbackId nếu có
-            if (!string.IsNullOrEmpty(feedbackId))
+
+            // Điều kiện tìm kiếm theo ClassId
+            if (!string.IsNullOrEmpty(classId))
             {
-                feedbackQuery = feedbackQuery.Where(p => p.Id == feedbackId);
+                feedbackQuery = feedbackQuery.Where(p => p.Class.Id == classId);
+
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với ClassId.");
+                }
             }
 
+            // Điều kiện tìm kiếm theo FeedbackId
+            if (feedbackId.HasValue && feedbackId != Guid.Empty)
+            {
+                feedbackQuery = feedbackQuery.Where(p => p.Id == feedbackId.Value);
 
-            //return feedback;
+                if (!await feedbackQuery.AnyAsync())
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Feedback với FeedbackId.");
+                }
+            }
+
+            // Tính tổng số lượng bản ghi sau khi lọc
             int totalCount = await feedbackQuery.CountAsync();
+
+            // Phân trang
             var feedback = await feedbackQuery
-                .Skip((pageNumber - 1) * pageSize) // Phân trang
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            if (feedback == null)
-            {
-                throw new KeyNotFoundException("Không tìm thấy Feedback với những thông tin trên.");
-            }
+
             return new BasePaginatedList<Feedback>(feedback, totalCount, pageNumber, pageSize);
         }
 
 
-        public async Task<Feedback> UpdateFeedbackAsync(string id, Guid studentId, UpdateFeedbackModelViews model)
+
+        public async Task<Feedback> UpdateFeedbackAsync(Guid id, Guid studentId, UpdateFeedbackModelViews model)
         {
+            if (id == Guid.Empty)
+            {
+                throw new Exception("Chưa nhập ID Feedback.");
+            }
+            if (studentId == Guid.Empty) {
+                throw new Exception("Chưa nhập ID sinh viên.");
+            }
             // Tìm feedback dựa trên feedbackId và studentId
             var feedback = await _unitOfWork.FeedbackRepository.Entities
                 .FirstOrDefaultAsync(f => f.Id == id && f.StudentId == studentId && !f.DeletedTime.HasValue);
@@ -172,15 +269,19 @@ namespace OnDemandTutor.Services.Service
               .FirstOrDefaultAsync(f => f.StudentId == studentId && !f.DeletedTime.HasValue);
             if (student == null)
             {
-                throw new Exception("Không tìm thấy student! Hãy thử lại.");
+                throw new KeyNotFoundException("Không tìm thấy student! Hãy thử lại.");
             }
 
             // Nếu feedback không tồn tại hoặc không phải của sinh viên này, trả về thông báo lỗi
             if (feedback == null)
             {
-                throw new Exception("Không tìm thấy feedback cho sinh viên này! Hãy thử lại.");
+                throw new KeyNotFoundException("Không tìm thấy feedback cho sinh viên này! Hãy thử lại.");
             }
-
+            // Kiểm tra xem nội dung có thay đổi hay không
+            if (feedback.FeedbackText == model.FeedbackText)
+            {
+                throw new InvalidOperationException("Nội dung không có sự thay đổi");
+            }
             // Sử dụng AutoMapper để ánh xạ dữ liệu
             _mapper.Map(model, feedback);
             feedback.LastUpdatedTime = DateTimeOffset.Now; // Cập nhật thời gian sửa đổi
@@ -193,12 +294,21 @@ namespace OnDemandTutor.Services.Service
 
 
 
-        public async Task<bool> DeleteFeedbackAsync(string id, Guid studentId)
+        public async Task<bool> DeleteFeedbackAsync(Guid id, Guid studentId)
         {
-            // tìm kiếm id
+            // kiểm tra đã nhập hay chưa
+            if (id == Guid.Empty)
+            {
+                throw new Exception("Chưa nhập ID Feedback.");
+            }
+            if (studentId == Guid.Empty)
+            {
+                throw new Exception("Chưa nhập ID sinh viên.");
+            }
+            // tìm kiếm id feedback chưa bị xóa
             var existingFeedback = await _unitOfWork.FeedbackRepository.Entities
             .FirstOrDefaultAsync(f => f.Id == id && f.StudentId == studentId && !f.DeletedTime.HasValue);
-
+            //nếu chưa tiến hành xóa
             if (existingFeedback != null)
             {
                 existingFeedback.DeletedTime = DateTimeOffset.Now;
@@ -207,6 +317,10 @@ namespace OnDemandTutor.Services.Service
 
                 return true; // Trả về true nếu xóa thành công
             }
+            else {
+                throw new Exception("Không tìm thấy feedback hoặc đã bị xóa!!");
+            }
+
             return false;
         }
 

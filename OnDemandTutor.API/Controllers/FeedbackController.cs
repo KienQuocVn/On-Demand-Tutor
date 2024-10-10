@@ -22,12 +22,12 @@ namespace OnDemandTutor.API.Controllers
 
 
         [HttpGet("filter")]
-        public async Task<ActionResult<Feedback>> GetFeedbackByFilter(int pageNumber, int pageSize, string? slotId, Guid? studentId, Guid? tutorId, string? feedbackId)
+        public async Task<ActionResult<Feedback>> GetFeedbackByFilter(int pageNumber, int pageSize, string? slotId, string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
             try
             {
                 // Gọi service để lấy feedback theo bộ lọc
-                var feedback = await _feedbackSevice.GetFeedbackByFilterAsync(pageNumber, pageSize, slotId, studentId, tutorId, feedbackId);
+                var feedback = await _feedbackSevice.GetFeedbackByFilterAsync(pageNumber, pageSize, slotId, classId, studentId, tutorId, feedbackId);
 
                 // Trả về kết quả feedback
                 return Ok(feedback);
@@ -49,12 +49,12 @@ namespace OnDemandTutor.API.Controllers
             }
         }
         [HttpGet("filler_delete")]
-        public async Task<IActionResult> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, string? slotId, Guid? studentId, Guid? tutorId, string? feedbackId)
+        public async Task<IActionResult> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, string? slotId, string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
             try
             {
                 // Gọi service để lấy feedback theo bộ lọc
-                var feedback = await _feedbackSevice.GetDeleteAtFeedbackAsync(pageNumber, pageSize, slotId, studentId, tutorId, feedbackId);
+                var feedback = await _feedbackSevice.GetDeleteAtFeedbackAsync(pageNumber, pageSize, slotId, classId, studentId, tutorId, feedbackId);
 
                 // Trả về kết quả feedback
                 return Ok(feedback);
@@ -92,7 +92,7 @@ namespace OnDemandTutor.API.Controllers
 
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateFeedback(string id, Guid studentId, UpdateFeedbackModelViews model)
+        public async Task<IActionResult> UpdateFeedback(Guid id, Guid studentId, UpdateFeedbackModelViews model)
         {
 
             try
@@ -103,12 +103,12 @@ namespace OnDemandTutor.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while updating feedback.", error = ex.Message });
+                return BadRequest(new { Message = ex.Message });
             }
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteFeedback(string id, Guid studentId)
+        public async Task<IActionResult> DeleteFeedback(Guid id, Guid studentId)
         {
 
             try
