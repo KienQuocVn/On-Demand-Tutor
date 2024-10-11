@@ -272,5 +272,36 @@ namespace OnDemandTutor.Services.Service
 
             return existedClass.AmountOfSlot * existedSlot.Price;
         }
+        
+         public async Task<BasePaginatedList<Class>> GetClassByTutorIDAsync(Guid tutorId, int pageNumber, int pageSize)
+         {
+             // Kiểm tra tham số tutorId có tồn tại không
+             if (tutorId == Guid.Empty)
+             {
+                 throw new Exception("tutorID cannot be empty.");
+             }
+        
+             // Lấy danh sách các TutorSubject liên kết với TutorId
+             List<TutorSubject> tutorSubjects = await _unitOfWork.GetRepository<TutorSubject>().Entities
+                 .Where(ts => ts.TutorId == tutorId && !ts.DeletedTime.HasValue)
+                 .ToListAsync();
+        
+             // Lấy danh sách SubjectId từ TutorSubject
+             List<string> subjectIds = tutorSubjects.Select(ts => ts.SubjectId).Distinct().ToList();
+        
+             // Lấy danh sách Classes tương ứng với SubjectId và TutorId, áp dụng phân trang
+             IQueryable<Class> classesQuery = _unitOfWork.GetRepository<Class>().Entities
+                 .Where(c => subjectIds.Contains(c.SubjectId) && c.AccountId == tutorId && !c.DeletedTime.HasValue)
+                 .OrderBy(c => c.StartDay);
+        
+             int totalCount = await classesQuery.CountAsync();
+        
+             List<Class> paginatedClasses = await classesQuery
+                 .Skip((pageNumber - 1) * pageSize)
+                 .Take(pageSize)
+                 .ToListAsync();
+        
+             return new BasePaginatedList<Class>(paginatedClasses, totalCount, pageNumber, pageSize);
+         }
     }
 }
