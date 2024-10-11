@@ -101,6 +101,22 @@ namespace OnDemandTutor.API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        
+        // GET: GetClassBtTutorId/tutorId
+        // Lấy các class theo id của gia sư được truyền vào
+        [HttpGet("GetClassBtTutorId/{id}")]
+        public async Task<IActionResult> GetClassBtTutorId(Guid id, int pageNumber = 1, int pageSize = 5)
+        {
+            try
+            {
+                var result = await _classService.GetClassByTutorIDAsync(id , pageNumber, pageSize );
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
     }
 }
