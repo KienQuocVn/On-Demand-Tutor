@@ -13,5 +13,7 @@ namespace OnDemandTutor.Contract.Services.Interface
         Task<ResponseClassModelView> UpdateClassAsync(string id, UpdateClassModelView model);
         Task<ResponseClassModelView> DeleteClassAsync(string id);
         Task<Double> CalculateTotalAmount(string id);
+        Task<BasePaginatedList<Class>> GetClassByTutorIDAsync(Guid tutorId, int pageNumber, int pageSize);
+
     }
 }
