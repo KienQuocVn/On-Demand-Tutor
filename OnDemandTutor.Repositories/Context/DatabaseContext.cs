@@ -63,25 +63,6 @@ namespace OnDemandTutor.Repositories.Context
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-            // Schedule relationships
-
-            // Cấu hình mối quan hệ cho Schedule  
-
-            modelBuilder.Entity<Schedule>()
-                .HasKey(s => new { s.StudentId, s.SlotId }); // Khóa chính cho Schedule  
-
-            modelBuilder.Entity<Schedule>()
-                .HasOne(s => s.Student) // Mối quan hệ với Accounts  
-                .WithMany(a => a.Schedules)
-                .HasForeignKey(s => s.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Schedule>()
-                .HasOne(s => s.Slot) // Mối quan hệ với Slot  
-                .WithMany(s => s.Schedules)
-                .HasForeignKey(s => s.SlotId)
-                .OnDelete(DeleteBehavior.Restrict);
-
 
             // Complaint relationships
             modelBuilder.Entity<Complaint>()

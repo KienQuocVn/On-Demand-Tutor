@@ -27,7 +27,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
         //public int Id { get; set; }
 
 
-        public string ClassId { get; set; }
+        public Guid ClassId { get; set; }
         public string DayOfSlot { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }

@@ -29,7 +29,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
 
 
         public Guid StudentId { get; set; }
-        public String SlotId { get; set; }
+        public Guid SlotId { get; set; }
         public string Status { get; set; } 
 
         // Navigation properties

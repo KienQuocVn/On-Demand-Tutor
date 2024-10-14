@@ -10,7 +10,6 @@ namespace OnDemandTutor.Contract.Repositories.Entity
 {
     public class Subject : BaseEntity
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
         public Guid TutorId { get; set; }
         public string Name { get; set; }
         public virtual ICollection<TutorSubject> TutorSubjects { get; set; }
