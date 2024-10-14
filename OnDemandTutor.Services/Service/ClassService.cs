@@ -272,7 +272,6 @@ namespace OnDemandTutor.Services.Service
 
             return existedClass.AmountOfSlot * existedSlot.Price;
         }
-
         public async Task<BasePaginatedList<Class>> GetClassByTutorIDAsync(Guid tutorId, int pageNumber, int pageSize)
         {
             // Kiểm tra tham số tutorId có tồn tại không
@@ -303,6 +302,5 @@ namespace OnDemandTutor.Services.Service
 
             return new BasePaginatedList<Class>(paginatedClasses, totalCount, pageNumber, pageSize);
         }
-
     }
 }

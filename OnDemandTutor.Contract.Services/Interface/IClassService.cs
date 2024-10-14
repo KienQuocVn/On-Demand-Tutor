@@ -16,6 +16,5 @@ namespace OnDemandTutor.Contract.Services.Interface
         Task<Double> CalculateTotalAmount(Guid id);
         Task<BasePaginatedList<Class>> GetClassByTutorIDAsync(Guid tutorId, int pageNumber, int pageSize);
 
-
     }
 }
