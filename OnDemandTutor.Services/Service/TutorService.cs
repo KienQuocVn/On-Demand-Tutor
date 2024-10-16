@@ -125,7 +125,7 @@ namespace OnDemandTutor.Services.Service
                 Rating = model.Rating,
                 Experience = model.Experience,
                 HourlyRate = model.HourlyRate,
-                Id = Guid.NewGuid().ToString("N"),
+                Id = Guid.NewGuid(),  
                 CreatedBy = "admin",
                 CreatedTime = DateTimeOffset.Now,
             };

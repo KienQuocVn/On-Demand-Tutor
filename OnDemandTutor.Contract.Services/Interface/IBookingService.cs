@@ -10,7 +10,8 @@ namespace OnDemandTutor.Contract.Services.Interface
   
         public interface IBookingService
         {
-            Task<string> BookSubject(BookingDto dto);
-        }
+        Task<string> BookSubjectBySlot(SlotBookingDto dto);
+        Task<string> BookSubjectByTime(TimeBookingDto dto);
+    }
 
 }

@@ -18,7 +18,7 @@ namespace OnDemandTutor.API.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<ActionResult<Slot>> GetAllSlotByFilter(int pageNumber, int pageSize, string? id, string? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
+        public async Task<ActionResult<Slot>> GetAllSlotByFilter(int pageNumber, int pageSize, Guid? id, Guid? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace OnDemandTutor.API.Controllers
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateSlot(string id, SlotModelView model)
+        public async Task<IActionResult> UpdateSlot(Guid id, SlotModelView model)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace OnDemandTutor.API.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteSlot(string id)
+        public async Task<IActionResult> DeleteSlot(Guid id)
         {
 
             try

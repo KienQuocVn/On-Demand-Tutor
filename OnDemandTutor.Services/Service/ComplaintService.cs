@@ -67,7 +67,7 @@ namespace OnDemandTutor.Services.Service
             try
             {
                 var complaint = await _unitOfWork.GetRepository<Complaint>().Entities
-                    .FirstOrDefaultAsync(c => c.Id == id.ToString())
+                    .FirstOrDefaultAsync(c => c.Id == id)
                     ?? throw new Exception($"Complaint with ID {id} not found.");
 
                 return _mapper.Map<ResponseComplaintModel>(complaint);
@@ -84,7 +84,7 @@ namespace OnDemandTutor.Services.Service
             try
             {
                 var complaint = _mapper.Map<Complaint>(model);
-                complaint.Id = Guid.NewGuid().ToString("N");
+                complaint.Id = Guid.NewGuid();
 
                 await _unitOfWork.GetRepository<Complaint>().InsertAsync(complaint);
                 await _unitOfWork.SaveAsync();
@@ -102,9 +102,8 @@ namespace OnDemandTutor.Services.Service
         {
             try
             {
-                var idString = id.ToString("N");
                 var existingComplaint = await _unitOfWork.GetRepository<Complaint>().Entities
-                    .FirstOrDefaultAsync(c => c.Id == idString) ?? throw new Exception($"Complaint with ID {id} not found.");
+                    .FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception($"Complaint with ID {id} not found.");
 
                 _mapper.Map(model, existingComplaint);
                 await _unitOfWork.SaveAsync();
@@ -122,9 +121,8 @@ namespace OnDemandTutor.Services.Service
         {
             try
             {
-                var idString = id.ToString("N");
                 var existingComplaint = await _unitOfWork.GetRepository<Complaint>().Entities
-                    .FirstOrDefaultAsync(c => c.Id == idString) ?? throw new Exception($"Complaint with ID {id} not found.");
+                    .FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception($"Complaint with ID {id} not found.");
 
                 _unitOfWork.GetRepository<Complaint>().Delete(existingComplaint);
                 await _unitOfWork.SaveAsync();

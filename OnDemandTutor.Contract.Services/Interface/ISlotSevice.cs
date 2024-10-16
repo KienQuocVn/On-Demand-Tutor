@@ -11,9 +11,9 @@ namespace OnDemandTutor.Contract.Services.Interface
 {
     public interface ISlotSevice
     {
-        public Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber,int pageSize, string? id, string? classId,TimeSpan? StartTime, TimeSpan? endTime, double? price);
+        public Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber,int pageSize, Guid? id, Guid? classId,TimeSpan? StartTime, TimeSpan? endTime, double? price);
         public Task<Slot> CreateSlotAsync(SlotModelView model);
-        public Task<Slot> UpdateSlotAsync(string id,SlotModelView model);
-        public Task<bool> DeleteSlotAsync(string id);
+        public Task<Slot> UpdateSlotAsync(Guid id,SlotModelView model);
+        public Task<bool> DeleteSlotAsync(Guid id);
     }
 }

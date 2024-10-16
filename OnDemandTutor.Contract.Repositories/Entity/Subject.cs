@@ -10,6 +10,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
 {
     public class Subject : BaseEntity
     {
+        public Guid ClassId { get; set; }
         public Guid Id { get; set; }
         public Guid TutorId { get; set; }
         public string Name { get; set; }

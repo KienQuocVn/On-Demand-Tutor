@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace OnDemandTutor.ModelViews.Booking
 {
-    public class BookingDto
+    public class TimeBookingDto
     {
-
         public Guid StudentId { get; set; }
         public Guid SubjectId { get; set; }
-        public Guid? TutorSubjectId { get; set; }
-        public Guid SlotId { get; set; }
-        public DateTime SelectedDate { get; set; } // Thêm thuộc tính ngày được chọn 
+        public Guid TutorSubjectId { get; set; }
+        public DateTime SelectedDate { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
     }
 }

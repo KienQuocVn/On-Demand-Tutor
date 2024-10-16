@@ -12,24 +12,8 @@ namespace OnDemandTutor.Contract.Repositories.Entity
 {
     public class Schedule : BaseEntity
     {
-        //[Key]
-        //public int Id { get; set; }
-
-        //[ForeignKey("Student")]
-        //public int StudentId { get; set; }
-
-        //[ForeignKey("Slot")]
-        //public int SlotId { get; set; }
-
-        //public string Status { get; set; }
-
-        //// Navigation properties
-        //public virtual Student Student { get; set; }
-        //public virtual Slot Slot { get; set; }
-
-
         public Guid StudentId { get; set; }
-        public String SlotId { get; set; }
+        public Guid SlotId { get; set; }
         public string Status { get; set; } 
 
         // Navigation properties

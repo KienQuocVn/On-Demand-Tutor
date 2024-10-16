@@ -12,8 +12,8 @@ namespace OnDemandTutor.ModelViews.FeedbackModelViews
         public Guid StudentId { get; set; }
         public Guid TutorId { get; set; }
 
-        public string SlotId { get; set; }
-        public string ClassId { get; set; }
+        public Guid SlotId { get; set; }
+        public Guid ClassId { get; set; }
         public string FeedbackText { get; set; }
     }
 }

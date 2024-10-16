@@ -8,7 +8,7 @@ namespace OnDemandTutor.ModelViews.SLotModelViews
 {
     public class UpdateSlotModelView
     {
-        public string ClassId { get; set; }
+        public Guid ClassId { get; set; }
         public string DayOfSlot { get; set; }
         public string StartTime { get; set; }
         public string EndTime { get; set; }

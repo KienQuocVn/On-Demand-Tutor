@@ -24,7 +24,7 @@ namespace OnDemandTutor.Services.Service
         }
 
         // Lấy về tất cả các class chưa bị xóa mềm và lọc theo các tham số được truyền vào nếu có
-        public async Task<BasePaginatedList<Class>> GetAllClassesAsync(int pageNumber, int pageSize, string? classId, Guid? accountId, string? subjectId, DateTime? startDay, DateTime? endDay)
+        public async Task<BasePaginatedList<Class>> GetAllClassesAsync(int pageNumber, int pageSize, Guid? classId, Guid? accountId, Guid? subjectId, DateTime? startDay, DateTime? endDay)
         {
             // Lấy tất cả các bản ghi từ bảng Class với điều kiện tìm kiếm
             IQueryable<Class> classesQuery = _unitOfWork.GetRepository<Class>().Entities
@@ -32,7 +32,7 @@ namespace OnDemandTutor.Services.Service
                 .OrderByDescending(c => c.CreatedTime);
 
             // Điều kiện tìm kiếm theo classId nếu có
-            if (!string.IsNullOrWhiteSpace(classId))
+            if (classId.HasValue)
             {
                 classesQuery = classesQuery.Where(c => c.Id == classId);
             }
@@ -44,7 +44,7 @@ namespace OnDemandTutor.Services.Service
             }
 
             // Điều kiện tìm kiếm theo subjectId nếu có
-            if (!string.IsNullOrWhiteSpace(subjectId))
+            if (subjectId.HasValue)
             {
                 classesQuery = classesQuery.Where(c => c.SubjectId == subjectId);
             }
@@ -65,7 +65,7 @@ namespace OnDemandTutor.Services.Service
             int totalCount = await classesQuery.CountAsync();
 
             // Áp dụng phân trang nếu không tìm kiếm theo classId
-            if (string.IsNullOrWhiteSpace(classId))
+            if (classId == Guid.Empty)
             {
                 classesQuery = classesQuery
                     .Skip((pageNumber - 1) * pageSize)
@@ -86,7 +86,7 @@ namespace OnDemandTutor.Services.Service
                 throw new Exception("Please enter a valid AccountId.");
             }
 
-            if (string.IsNullOrWhiteSpace(model.SubjectId))
+            if (model.SubjectId == Guid.Empty)
             {
                 throw new Exception("Please enter a valid SubjectId.");
             }
@@ -133,7 +133,7 @@ namespace OnDemandTutor.Services.Service
             Class newClass = _mapper.Map<Class>(model);
 
             // Thiết lập thêm các thuộc tính không có trong CreateClassModelView
-            newClass.Id = Guid.NewGuid().ToString("N");
+            newClass.Id = Guid.NewGuid();
             newClass.CreatedBy = "claim account";  // Ví dụ: lấy từ thông tin xác thực
             newClass.CreatedTime = DateTimeOffset.UtcNow;
             newClass.LastUpdatedTime = DateTimeOffset.UtcNow;
@@ -146,9 +146,9 @@ namespace OnDemandTutor.Services.Service
 
 
         // cập nhật thông tin của class
-        public async Task<ResponseClassModelView> UpdateClassAsync(string id, UpdateClassModelView model)
+        public async Task<ResponseClassModelView> UpdateClassAsync(Guid id, UpdateClassModelView model)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id == Guid.Empty)
             {
                 throw new Exception("Please enter a Class ID can update.");
             }
@@ -231,9 +231,9 @@ namespace OnDemandTutor.Services.Service
             return _mapper.Map<ResponseClassModelView>(existingClass);
         }
 
-        public async Task<ResponseClassModelView> DeleteClassAsync(string id)
+        public async Task<ResponseClassModelView> DeleteClassAsync(Guid id)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id == Guid.Empty)
             {
                 throw new Exception("Please enter a valid Class ID.");
             }
@@ -255,20 +255,20 @@ namespace OnDemandTutor.Services.Service
             return _mapper.Map<ResponseClassModelView>(existingClass);
         }
 
-        public async Task<double> CalculateTotalAmount(string id)
+        public async Task<double> CalculateTotalAmount(Guid id)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id == Guid.Empty)
             {
                 throw new Exception("Please enter a valid Class ID.");
             }
 
             Class existedClass = await _unitOfWork.GetRepository<Class>().Entities
                 .FirstOrDefaultAsync(c => c.Id == id && !c.DeletedTime.HasValue)
-                 ?? throw new Exception("The Class cannot be found or has been deleted!"); 
+                ?? throw new Exception("The Class cannot be found or has been deleted!");
 
             Slot existedSlot = await _unitOfWork.GetRepository<Slot>().Entities
                 .FirstOrDefaultAsync(c => c.ClassId == existedClass.Id && !c.DeletedTime.HasValue)
-                 ?? throw new Exception("The Slot cannot be found or has been deleted!");
+                ?? throw new Exception("The Slot cannot be found or has been deleted!");
 
             return existedClass.AmountOfSlot * existedSlot.Price;
         }

@@ -18,5 +18,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
         public virtual TutorSubject TutorSubject { get; set; }
         public virtual Subject Subject { get; set; }
         public virtual Slot Slot { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public TimeSpan StartTime { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace OnDemandTutor.API.Controllers
         // GET: api/Schedule
         // lấy tất cả các lịch
         [HttpGet()]
-        public async Task<ActionResult<BasePaginatedList<Schedule>>> GetAllSchedules(int pageNumber = 1, int pageSize = 5, Guid? studentId = null, string? slotId = null, string status = null)
+        public async Task<ActionResult<BasePaginatedList<Schedule>>> GetAllSchedules(int pageNumber = 1, int pageSize = 5, Guid? studentId = null, Guid? slotId = null, string status = null)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace OnDemandTutor.API.Controllers
         // GET: api/Schedule
         // lấy tất cả lịch trừ những lịch đã được xóa
         [HttpGet("searchSchedule")]
-        public async Task<ActionResult<BasePaginatedList<Schedule>>> SearchSchedules(int pageNumber = 1, int pageSize = 5, Guid? studentId = null, string? slotId = null, string status = null)
+        public async Task<ActionResult<BasePaginatedList<Schedule>>> SearchSchedules(int pageNumber = 1, int pageSize = 5, Guid? studentId = null, Guid? slotId = null, string status = null)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace OnDemandTutor.API.Controllers
 
         // PUT: api/Schedule/{studentId}/{slotId}
         [HttpPut("{studentId}/{slotId}")]
-        public async Task<IActionResult> UpdateSchedule(Guid studentId, string slotId, [FromBody] UpdateScheduleModelViews model)
+        public async Task<IActionResult> UpdateSchedule(Guid studentId, Guid slotId, [FromBody] UpdateScheduleModelViews model)
         {
             try
             {
@@ -89,7 +89,7 @@ namespace OnDemandTutor.API.Controllers
         // DELETE: api/Schedule/delete/{studentId}/{slotId}
         // Xóa lịch truyền vào gồm student id và slotId
         [HttpDelete("delete/{studentId}/{slotId}")]
-        public async Task<IActionResult> DeleteSchedule(Guid studentId, string slotId)
+        public async Task<IActionResult> DeleteSchedule(Guid studentId, Guid slotId)
         {
             try
             {

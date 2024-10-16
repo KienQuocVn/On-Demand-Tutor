@@ -21,7 +21,7 @@ namespace OnDemandTutor.Services.Service
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<string> BookSubject(BookingDto dto)
+        public async Task<string> BookSubjectBySlot(SlotBookingDto dto)
         {
             var student = await _unitOfWork.GetRepository<Accounts>().FindAsync(dto.StudentId);
             if (student == null)
@@ -31,81 +31,87 @@ namespace OnDemandTutor.Services.Service
             if (subject == null)
                 return "Subject not found";
 
-            TutorSubject tutorSubject = null;
+            var tutorSubject = await _unitOfWork.TutorRepository.Entities
+                .FirstOrDefaultAsync(ts => ts.TutorId == dto.TutorSubjectId);
 
-            // Nếu người dùng chọn gia sư  
-            if (dto.TutorSubjectId.HasValue)
+            if (tutorSubject == null)
+                return "Tutor for this subject not found";
+
+            // Check if the selected slot is available  
+            var selectedSlot = await _unitOfWork.SlotRepository.FindAsync(dto.SlotId);
+            if (selectedSlot == null)
+                return "Selected slot not found";
+
+            // Check if the slot is already booked  
+            var existingBookings = await _unitOfWork.GetRepository<Booking>().Entities
+                .Where(b => b.SlotId == dto.SlotId)
+                .ToListAsync();
+
+            if (existingBookings.Any())
             {
-                tutorSubject = await _unitOfWork.TutorRepository.Entities
-                    .FirstOrDefaultAsync(ts => ts.TutorId == dto.TutorSubjectId.Value);
-
-                if (tutorSubject == null)
-                    return "Tutor for this subject not found";
-            }
-            else
-            {
-                // Nếu người dùng không chọn gia sư, có thể tự sắp xếp  
-                // Lấy danh sách gia sư cho môn học  
-                var availableTutors = await _unitOfWork.TutorRepository.Entities
-                    .Where(t => t.SubjectId == dto.SubjectId) // Giả sử có thuộc tính SubjectId trong Tutor  
-                    .ToListAsync();
-
-                if (!availableTutors.Any())
-                    return "No available tutors for this subject.";
-
-                // Chọn gia sư đầu tiên trong danh sách có sẵn (hoặc có thể thêm logic chọn ngẫu nhiên hoặc theo tiêu chí)  
-                tutorSubject = availableTutors.First();
+                return "The selected slot is already booked.";
             }
 
-            var slot = await _unitOfWork.SlotRepository.Entities
-                .FirstOrDefaultAsync(s => s.Id == dto.SlotId.ToString());
-            if (slot == null)
-                return "Slot not found";
-
-            // Kiểm tra xem ngày đã chọn có rảnh không  
-            if (!await IsDateAvailable(tutorSubject.TutorId, dto.SelectedDate, slot.StartTime, slot.EndTime))
-            {
-                return "The selected date is not available for this tutor.";
-            }
-
-            double durationInHours = (slot.EndTime - slot.StartTime).TotalHours;
-            double totalPrice = slot.Price * durationInHours;
-
-            // Tạo một lớp mới  
-            var newClass = new Class
-            {
-                AccountId = tutorSubject.TutorId,
-                SubjectId = dto.SubjectId.ToString(),
-                AmountOfSlot = 20,
-                StartDay = dto.SelectedDate, // Sử dụng ngày được chọn  
-                EndDay = dto.SelectedDate.AddMonths(1), // Giả sử lớp học kéo dài 1 tháng  
-            };
-
-            // Thêm lớp vào cơ sở dữ liệu  
-            await _unitOfWork.ClassRepository.InsertAsync(newClass);
-            await _unitOfWork.SaveAsync();
-
-            // Tạo slot cho các ngày đã chọn  
+            // Create a new Slot entry if needed  
             var newSlot = new Slot
             {
-                ClassId = newClass.Id,
-                StartTime = slot.StartTime, // Giữ nguyên thời gian bắt đầu  
-                EndTime = slot.EndTime, // Giữ nguyên thời gian kết thúc  
-                Price = slot.Price,
-                DayOfSlot = dto.SelectedDate.DayOfWeek.ToString() // Ngày của slot  
+                ClassId = subject.ClassId, 
+                StartTime = selectedSlot.StartTime,
+                EndTime = selectedSlot.EndTime,
+                Price = selectedSlot.Price,
+                DayOfSlot = dto.SelectedDate.DayOfWeek.ToString()
             };
 
-            // Thêm slot vào cơ sở dữ liệu  
             await _unitOfWork.SlotRepository.InsertAsync(newSlot);
             await _unitOfWork.SaveAsync();
 
-            // Đặt booking cho môn học này  
+            // Create a new booking  
             var booking = new Booking
             {
                 StudentId = dto.StudentId,
                 SubjectId = dto.SubjectId,
                 TutorId = tutorSubject.TutorId,
-                SlotId = dto.SlotId,
+                SlotId = newSlot.Id,
+                BookingDate = DateTime.UtcNow,
+                TotalPrice = newSlot.Price // Assuming price is already set in the slot  
+            };
+
+            await _unitOfWork.GetRepository<Booking>().InsertAsync(booking);
+            await _unitOfWork.SaveAsync();
+
+            return $"Subject booked successfully. Total Price: {newSlot.Price:C}";
+        }
+
+        public async Task<string> BookSubjectByTime(TimeBookingDto dto)
+        {
+            var student = await _unitOfWork.GetRepository<Accounts>().FindAsync(dto.StudentId);
+            if (student == null)
+                return "Student not found";
+
+            var subject = await _unitOfWork.SubjectRepository.FindAsync(dto.SubjectId);
+            if (subject == null)
+                return "Subject not found";
+
+            var tutorSubject = await _unitOfWork.TutorRepository.Entities
+                .FirstOrDefaultAsync(ts => ts.TutorId == dto.TutorSubjectId);
+
+            if (tutorSubject == null)
+                return "Tutor for this subject not found";
+
+            // Check if the selected time is available  
+            if (!await IsTimeAvailable(tutorSubject.TutorId, dto.SelectedDate, dto.StartTime, dto.EndTime))
+            {
+                return "The selected time is not available for this tutor.";
+            }
+
+            double durationInHours = (dto.EndTime - dto.StartTime).TotalHours;
+            double totalPrice = CalculateTotalPrice(durationInHours); // Implement your pricing logic  
+
+            var booking = new Booking
+            {
+                StudentId = dto.StudentId,
+                SubjectId = dto.SubjectId,
+                TutorId = tutorSubject.TutorId,
                 BookingDate = DateTime.UtcNow,
                 TotalPrice = totalPrice
             };
@@ -113,25 +119,32 @@ namespace OnDemandTutor.Services.Service
             await _unitOfWork.GetRepository<Booking>().InsertAsync(booking);
             await _unitOfWork.SaveAsync();
 
-            return $"Subject booked successfully and class has been scheduled. Total Price: {totalPrice:C}";
+            return $"Subject booked successfully. Total Price: {totalPrice:C}";
         }
 
         // Phương thức kiểm tra khả dụng của ngày  
-        private async Task<bool> IsDateAvailable(Guid tutorId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
+        private async Task<bool> IsTimeAvailable(Guid tutorId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
         {
-            var existingSlots = await _unitOfWork.SlotRepository.Entities
-                .Where(s => s.DayOfSlot == selectedDate.DayOfWeek.ToString())
+            var existingBookings = await _unitOfWork.GetRepository<Booking>().Entities
+                .Where(b => b.TutorId == tutorId && b.BookingDate.Date == selectedDate.Date)
                 .ToListAsync();
 
-            foreach (var slot in existingSlots)
+            foreach (var booking in existingBookings)
             {
-                if ((startTime < slot.EndTime) && (endTime > slot.StartTime))
+                // Assuming you have access to the slot times for each booking  
+                if ((startTime < booking.EndTime) && (endTime > booking.StartTime))
                 {
-                    return false; // Ngày không rảnh  
+                    return false; // Time not available  
                 }
             }
 
-            return true; // Ngày rảnh  
+            return true; // Time is available  
+        }
+
+        private double CalculateTotalPrice(double durationInHours)
+        {
+            // Implement your pricing logic here  
+            return durationInHours * 50; // Example pricing  
         }
 
     }

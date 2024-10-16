@@ -20,18 +20,20 @@ namespace OnDemandTutor.Services.Service
         private IUnitOfWork _unitOfWork;
         private IMapper _mapper;
 
-        public SlotService(IUnitOfWork unitOfWork, IMapper mapper) { 
+        public SlotService(IUnitOfWork unitOfWork, IMapper mapper)
+        {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
         public async Task<Slot> CreateSlotAsync(SlotModelView model)
         {
-            bool isExistClass = await _unitOfWork.GetRepository<Class>().Entities
-                .AnyAsync(s => s.Id == model.ClassId && !s.DeletedTime.HasValue);
-            // Kiểm tra class có tồn tại hay không
-            if (!isExistClass) {
-                throw new Exception("Không tìm thấy class! Hãy thử lại");
-            }
+            //bool isExistClass = await _unitOfWork.GetRepository<Class>().Entities
+            //     .AnyAsync(s => s.Id == model.ClassId && !s.DeletedTime.HasValue);
+            //// Kiểm tra class có tồn tại hay không
+            //if (!isExistClass)
+            //{
+            //    throw new Exception("Không tìm thấy class! Hãy thử lại");
+            //}
 
             // Kiểm tra xem StartTime có nhỏ hơn EndTime không
             if (model.StartTime >= model.EndTime)
@@ -57,7 +59,7 @@ namespace OnDemandTutor.Services.Service
                 throw new Exception("Lỗi khi map dữ liệu từ SlotModelView sang Slot.");
             }
             // Thiết lập các thuộc tính còn lại
-            slot.Id = Guid.NewGuid().ToString("N");
+            slot.Id = Guid.NewGuid();
             slot.CreatedBy = "admin";  // Ví dụ: lấy từ thông tin xác thực
             slot.CreatedTime = DateTimeOffset.Now;
             slot.LastUpdatedTime = DateTimeOffset.Now;
@@ -71,30 +73,30 @@ namespace OnDemandTutor.Services.Service
 
             return slot;
         }
-        public async Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber, int pageSize, string? id, string? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
+        public async Task<BasePaginatedList<Slot>> GetAllSlotByFilterAsync(int pageNumber, int pageSize, Guid? id, Guid? classId, TimeSpan? StartTime, TimeSpan? endTime, double? price)
         {
             IQueryable<Slot> SlotQuerys = _unitOfWork.GetRepository<Slot>().Entities
                            .Where(p => !p.DeletedTime.HasValue) // Lọc Slot chưa bị xóa mềm
                            .OrderByDescending(p => p.CreatedTime);
 
             // Điều kiện tìm kiếm theo id slot
-            if (!string.IsNullOrEmpty(id))
+            if (id.HasValue)
             {
-                SlotQuerys = SlotQuerys.Where(p => p.Id == id);
+                SlotQuerys = SlotQuerys.Where(p => p.Id == id.Value);
 
                 if (!await SlotQuerys.AnyAsync())
                 {
-                    throw new KeyNotFoundException("Không tìm thấy ID Slot");
+                    throw new KeyNotFoundException("Slot ID not found.");
                 }
             }
             // Điều kiện tìm kiếm theo classId
-            if (!string.IsNullOrEmpty(classId))
+            if (classId.HasValue)
             {
-                SlotQuerys = SlotQuerys.Where(p => p.ClassId == classId);
+                SlotQuerys = SlotQuerys.Where(p => p.ClassId == classId.Value);
 
                 if (!await SlotQuerys.AnyAsync())
                 {
-                    throw new KeyNotFoundException("Không tìm thấy Slot với classId");
+                    throw new KeyNotFoundException("No slots found with the specified class ID.");
                 }
             }
 
@@ -156,24 +158,25 @@ namespace OnDemandTutor.Services.Service
 
 
 
-        public async Task<Slot> UpdateSlotAsync(string id, SlotModelView model)
+        public async Task<Slot> UpdateSlotAsync(Guid id, SlotModelView model)
         {
 
             var slot = await _unitOfWork.SlotRepository.Entities
                 .FirstOrDefaultAsync(s => s.Id == id && !s.DeletedTime.HasValue);
 
             // kiểm tra slot có tồn tại hay không
-            if (slot == null) {
+            if (slot == null)
+            {
                 throw new Exception("Không tìm thấy slot! Hãy thử lại");
             }
             // Kiểm tra classId có tồn tại hay không
-            var classEntity = await _unitOfWork.GetRepository<Class>().Entities
-                .FirstOrDefaultAsync(c => c.Id == model.ClassId);
+            //var classEntity = await _unitOfWork.GetRepository<Class>().Entities
+            //    .FirstOrDefaultAsync(c => c.Id == model.ClassId);
 
-            if (classEntity == null)
-            {
-                throw new KeyNotFoundException("Không tìm thấy class với ID đã cho.");
-            }
+            //if (classEntity == null)
+            //{
+            //    throw new KeyNotFoundException("Không tìm thấy class với ID đã cho.");
+            //}
 
             // Kiểm tra xem StartTime có nhỏ hơn EndTime không
             if (model.StartTime >= model.EndTime)
@@ -203,7 +206,7 @@ namespace OnDemandTutor.Services.Service
             return slot;
         }
 
-        public async Task<bool> DeleteSlotAsync(string id)
+        public async Task<bool> DeleteSlotAsync(Guid id)
         {
             var slot = await _unitOfWork.SlotRepository.Entities
                 .FirstOrDefaultAsync(s => s.Id == id && !s.DeletedTime.HasValue);

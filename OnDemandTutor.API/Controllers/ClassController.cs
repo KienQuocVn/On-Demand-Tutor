@@ -23,7 +23,7 @@ namespace OnDemandTutor.API.Controllers
         // GET: api/Class
         // lấy danh sách các class có fillter hoặc không
         [HttpGet()]
-        public async Task<ActionResult<BasePaginatedList<Class>>> GetAllClasses(int pageNumber = 1,int pageSize = 5, string? id = null, Guid? accountId = null,string? subjectId = null,DateTime? startDay = null,DateTime? endDay = null)
+        public async Task<ActionResult<BasePaginatedList<Class>>> GetAllClasses(int pageNumber = 1,int pageSize = 5, Guid? id = null, Guid? accountId = null, Guid? subjectId = null,DateTime? startDay = null,DateTime? endDay = null)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace OnDemandTutor.API.Controllers
         // PUT: api/Class/{id}
         // cập nhật 1 class với id truyền vào
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateClass(string id, [FromBody] UpdateClassModelView model)
+        public async Task<IActionResult> UpdateClass(Guid id, [FromBody] UpdateClassModelView model)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace OnDemandTutor.API.Controllers
         // DELETE: api/Class/{id}
         // thực hiện xóa mềm 1 class
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteClass(string id)
+        public async Task<IActionResult> DeleteClass(Guid id)
         {
             try
             {
@@ -89,7 +89,7 @@ namespace OnDemandTutor.API.Controllers
         // GET: api/Class
         // lấy tống giá tiền của class đó từ số amoutOfSlot và price trong slot
         [HttpGet("GetTotalAmountClasses/{id}")]
-        public async Task<IActionResult> GetTotalAmountClasses(string id)
+        public async Task<IActionResult> GetTotalAmountClasses(Guid id)
         {
             try
             {

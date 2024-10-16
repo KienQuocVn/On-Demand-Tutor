@@ -22,7 +22,7 @@ namespace OnDemandTutor.API.Controllers
 
 
         [HttpGet("filter")]
-        public async Task<ActionResult<Feedback>> GetFeedbackByFilter(int pageNumber, int pageSize, string? slotId, string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
+        public async Task<ActionResult<Feedback>> GetFeedbackByFilter(int pageNumber, int pageSize, Guid? slotId, Guid? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace OnDemandTutor.API.Controllers
             }
         }
         [HttpGet("filler_delete")]
-        public async Task<IActionResult> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, string? slotId, string? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
+        public async Task<IActionResult> GetDeleteAtFeedbackAsync(int pageNumber, int pageSize, Guid? slotId, Guid? classId, Guid? studentId, Guid? tutorId, Guid? feedbackId)
         {
             try
             {

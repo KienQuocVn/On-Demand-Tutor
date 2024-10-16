@@ -10,7 +10,7 @@ namespace OnDemandTutor.ModelViews.ScheduleModelViews
     {
         public Guid Id { get; set; }
         public Guid StudentId { get; set; }
-        public string SlotId { get; set; }
+        public Guid SlotId { get; set; }
         public string Status { get; set; }
         public string? CreatedBy { get; set; }
         public DateTimeOffset CreatedTime { get; set; }

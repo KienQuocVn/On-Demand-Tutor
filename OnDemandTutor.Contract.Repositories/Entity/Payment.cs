@@ -10,9 +10,6 @@ namespace OnDemandTutor.Contract.Repositories.Entity
 {
     public class Payment : BaseEntity
     {
-        //public int Id { get; set; }
-        //public int TutorId { get; set; }
-        //public int AdminId { get; set; }
         public string BankAccountNumber { get; set; }
         public string Bank { get; set; }
 
