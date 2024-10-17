@@ -2,13 +2,11 @@
 {
     public class PaymentInfo
     {
-        public Guid AccountId { get; set; }
-        public string BankAccountNumber { get; set; }
-        public string BankAccountName { get; set; }
-        public string Bank { get; set; }
-        public double Amount { get; set; }
-        public string OrderDescription { get; set; }
-        public string OrderType { get; set; }
-        public string TxnRef { get; set; }
+        public int OrderId { get; set; }
+        public string FullName { get; set; }
+        public string Description { get; set; }
+        public decimal Amount { get; set; }
+
+        public DateTime CreatedDate { get; set; }
     }
 }

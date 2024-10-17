@@ -32,60 +32,30 @@ namespace OnDemandTutor.API.Controllers
             {
                 var paymentInfo = new PaymentInfo
                 {
-                    Amount = double.Parse(amount),
-                    OrderDescription = "Description of the Order", 
-                    OrderType = "Type of the Order", 
-                    TxnRef = Guid.NewGuid().ToString() 
+                    OrderId = 112,
+                    FullName = "Nguyen Van A",
+                    Description = "",
+                    Amount = decimal.Parse(amount),
+                    CreatedDate = DateTime.UtcNow.AddHours(7)
                 };
-
-                var paymentUrl = _vnPayService.CreatePaymentUrl(paymentInfo, HttpContext);
-                return Ok(paymentUrl);
+                var Url = _vnPayService.CreatePaymentUrl(HttpContext, paymentInfo);
+                return Ok(Url);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { Error = ex.Message });
             }
         }
-
 
         [HttpGet("vnpay-payment-return")]
         public IActionResult PaymentCompleted()
         {
-            try
+            var response = _vnPayService.PaymentExecute(HttpContext.Request.Query);
+            if (response == null || response?.VnPayResponseCode != "00")
             {
-                var response = _vnPayService.ProcessPaymentCallback(HttpContext.Request.Query);
-                var orderInfo = HttpContext.Request.Query["vnp_OrderInfo"].ToString();
-                var paymentTime = HttpContext.Request.Query["vnp_PayDate"].ToString();
-                var transactionId = HttpContext.Request.Query["vnp_TransactionNo"].ToString();
-                var totalPrice = HttpContext.Request.Query["vnp_Amount"].ToString();
-                if (response.Success)
-                {
-                    return Ok(new
-                    {
-                        Status = "Success",
-                        OrderInfo = orderInfo,
-                        PaymentTime = paymentTime,
-                        TransactionId = transactionId,
-                        TotalPrice = totalPrice
-                    });
-                }
-                else
-                {
-                    return BadRequest(new
-                    {
-                        Status = "Failure",
-                        OrderInfo = orderInfo,
-                        PaymentTime = paymentTime,
-                        TransactionId = transactionId,
-                        TotalPrice = totalPrice
-                    });
-                }
+                return StatusCode(500, new { message = $"Lỗi thanh toán VNPay: {response?.VnPayResponseCode ?? "unknown error"}" });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Error = ex.Message });
-            }
+            return Ok(response);
         }
-
     }
 }
