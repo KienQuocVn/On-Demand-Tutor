@@ -25,57 +25,67 @@ namespace OnDemandTutor.API.Controllers
             return Ok("createOrder");
         }
 
-        // Chuyển hướng người dùng đến cổng thanh toán VNPAY
         [HttpPost("submitOrder")]
-            public IActionResult SubmitOrder([FromQuery] string amount)
-            {
-                try
-                {
-                    var paymentUrl = _vnPayService.CreatePaymentUrl(new PaymentInfo { Amount = double.Parse(amount) }, HttpContext);
-                    return Ok(paymentUrl);
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(new { Error = ex.Message });
-                }
-            }
-
-        // Sau khi hoàn tất thanh toán, VNPAY sẽ chuyển hướng trình duyệt về URL này
-       [HttpGet("vnpay-payment-return")]
-public IActionResult PaymentCompleted()
-{
-    try
-    {
-        var response = _vnPayService.ProcessPaymentCallback(HttpContext.Request.Query);
-        var orderInfo = HttpContext.Request.Query["vnp_OrderInfo"].ToString();
-        var paymentTime = HttpContext.Request.Query["vnp_PayDate"].ToString();
-        var transactionId = HttpContext.Request.Query["vnp_TransactionNo"].ToString();
-        var totalPrice = HttpContext.Request.Query["vnp_Amount"].ToString();
-
-        if (response.Success)
+        public IActionResult SubmitOrder([FromQuery] string amount)
         {
-            var successUrl = _configuration["VnPay:ReturnSuccessUrl"];
-            if (string.IsNullOrEmpty(successUrl))
+            try
             {
-                return BadRequest(new { Error = "Value cannot be null or empty. (Parameter 'url')" });
+                var paymentInfo = new PaymentInfo
+                {
+                    Amount = double.Parse(amount),
+                    OrderDescription = "Description of the Order", 
+                    OrderType = "Type of the Order", 
+                    TxnRef = Guid.NewGuid().ToString() 
+                };
+
+                var paymentUrl = _vnPayService.CreatePaymentUrl(paymentInfo, HttpContext);
+                return Ok(paymentUrl);
             }
-            return Redirect(successUrl);
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
-        else
+
+
+        [HttpGet("vnpay-payment-return")]
+        public IActionResult PaymentCompleted()
         {
-            var failureUrl = _configuration["VnPay:ReturnFailureUrl"];
-            if (string.IsNullOrEmpty(failureUrl))
+            try
             {
-                return BadRequest(new { Error = "Value cannot be null or empty. (Parameter 'url')" });
+                var response = _vnPayService.ProcessPaymentCallback(HttpContext.Request.Query);
+                var orderInfo = HttpContext.Request.Query["vnp_OrderInfo"].ToString();
+                var paymentTime = HttpContext.Request.Query["vnp_PayDate"].ToString();
+                var transactionId = HttpContext.Request.Query["vnp_TransactionNo"].ToString();
+                var totalPrice = HttpContext.Request.Query["vnp_Amount"].ToString();
+                if (response.Success)
+                {
+                    return Ok(new
+                    {
+                        Status = "Success",
+                        OrderInfo = orderInfo,
+                        PaymentTime = paymentTime,
+                        TransactionId = transactionId,
+                        TotalPrice = totalPrice
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Status = "Failure",
+                        OrderInfo = orderInfo,
+                        PaymentTime = paymentTime,
+                        TransactionId = transactionId,
+                        TotalPrice = totalPrice
+                    });
+                }
             }
-            return Redirect(failureUrl);
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(new { Error = ex.Message });
-    }
-}
 
     }
 }

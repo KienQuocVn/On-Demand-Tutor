@@ -21,22 +21,43 @@ namespace OnDemandTutor.Services.Service
 
         public string CreatePaymentUrl(PaymentInfo model, HttpContext context)
         {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
             var vnpay = new VnPayLibrary();
-            vnpay.AddRequestData("vnp_Version", VnPayLibrary.VERSION);
-            vnpay.AddRequestData("vnp_Command", "pay");
-            vnpay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]);
-            vnpay.AddRequestData("vnp_Amount", (model.Amount * 100).ToString());
-            vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
-            vnpay.AddRequestData("vnp_CurrCode", "VND");
-            vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(context));
-            vnpay.AddRequestData("vnp_Locale", "vn");
-            vnpay.AddRequestData("vnp_OrderInfo", model.OrderDescription);
-            vnpay.AddRequestData("vnp_OrderType", model.OrderType);
-            vnpay.AddRequestData("vnp_ReturnUrl", _configuration["VnPay:ReturnUrl"]);
-            vnpay.AddRequestData("vnp_TxnRef", model.TxnRef);
-            string paymentUrl = vnpay.CreateRequestUrl(_configuration["VnPay:PaymentUrl"], _configuration["VnPay:HashSecret"]);
-            return paymentUrl;
+
+            try
+            {
+                // Add necessary data to the request
+                vnpay.AddRequestData("vnp_Version", VnPayLibrary.VERSION);
+                vnpay.AddRequestData("vnp_Command", "pay");
+                vnpay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]);
+                vnpay.AddRequestData("vnp_Amount", (model.Amount * 100).ToString("F0")); // Ensure amount is formatted correctly
+                vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                vnpay.AddRequestData("vnp_CurrCode", "VND");
+                vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(context));
+                vnpay.AddRequestData("vnp_Locale", "vn");
+                vnpay.AddRequestData("vnp_OrderInfo", model.OrderDescription ?? throw new ArgumentNullException(nameof(model.OrderDescription))); // Ensure order description is provided
+                vnpay.AddRequestData("vnp_OrderType", model.OrderType ?? throw new ArgumentNullException(nameof(model.OrderType))); // Ensure order type is provided
+                vnpay.AddRequestData("vnp_ReturnUrl", _configuration["VnPay:ReturnUrl"]);
+                vnpay.AddRequestData("vnp_TxnRef", model.TxnRef ?? throw new ArgumentNullException(nameof(model.TxnRef))); // Ensure transaction reference is provided
+
+                // Create request URL
+                string paymentUrl = vnpay.CreateRequestUrl(_configuration["VnPay:PaymentUrl"], _configuration["VnPay:HashSecret"]);
+
+                // Log the payment URL and data
+                Console.WriteLine($"Payment URL: {paymentUrl}");
+                return paymentUrl;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception with full details
+                Console.WriteLine($"Error creating payment URL: {ex.Message}\n{ex.StackTrace}");
+                throw; // Rethrow the exception after logging
+            }
         }
+
+
 
         public bool CheckPaymentStatus(double amount)
         {
