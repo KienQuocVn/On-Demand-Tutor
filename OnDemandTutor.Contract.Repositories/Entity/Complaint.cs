@@ -14,6 +14,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
     {
         public Guid StudentId { get; set; }
         public Guid TutorId { get; set; }
+        public Guid SlotId { get; set; }
 
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;

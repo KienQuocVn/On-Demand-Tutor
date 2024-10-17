@@ -84,22 +84,28 @@ namespace OnDemandTutor.Repositories.Context
 
             // Complaint relationships
             modelBuilder.Entity<Complaint>()
-                .HasKey(ts => new { ts.StudentId, ts.TutorId });
-
-            // Cấu hình mối quan hệ cho Complaint  
-            modelBuilder.Entity<Complaint>()
-                .HasKey(c => new { c.StudentId, c.TutorId }); // Khóa chính cho Complaint  
-
+                .HasKey(ts => new { ts.Id });
 
             modelBuilder.Entity<Complaint>()
                 .HasOne(c => c.Accounts) // Mối quan hệ với Accounts  
                 .WithMany(a => a.Complaints)
-                .HasForeignKey(c => c.StudentId);
+                .HasForeignKey(c => c.StudentId)
+                                .OnDelete(DeleteBehavior.Restrict);
+
 
             modelBuilder.Entity<Complaint>()
                 .HasOne(c => c.Accounts) // Mối quan hệ với Tutor  
                 .WithMany(a => a.Complaints)
-                .HasForeignKey(c => c.TutorId);
+                .HasForeignKey(c => c.TutorId)
+                                .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<Complaint>()
+                .HasOne(c => c.Slot) // Mối quan hệ với Tutor  
+                .WithMany(a => a.Complaints)
+                .HasForeignKey(c => c.SlotId)
+                                .OnDelete(DeleteBehavior.Restrict);
+
 
 
             // Feedback relationships
@@ -119,34 +125,39 @@ namespace OnDemandTutor.Repositories.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Feedback>()
-
-
                .HasOne(ts => ts.Accounts)
                 .WithMany(s => s.Feedbacks)
                 .HasForeignKey(ts => ts.TutorId);
 
+            modelBuilder.Entity<Feedback>()
+               .HasOne(ts => ts.Class)
+                .WithMany(s => s.Feedbacks)
+                .HasForeignKey(ts => ts.ClassId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Booking relationships
             // Booking relationships
             modelBuilder.Entity<Booking>()
-        .HasKey(b => b.Id); // Định nghĩa khóa chính cho Booking
+                .HasKey(b => b.Id); // Define primary key
 
             modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Student) // Mối quan hệ 1-n với Accounts (Student)
+                .HasOne(b => b.Student) // 1-n relationship with Accounts (Student)
                 .WithMany(s => s.Bookings)
                 .HasForeignKey(b => b.StudentId)
-                .OnDelete(DeleteBehavior.Cascade); // Nếu Student bị xóa, xóa luôn các Booking liên quan
+                .OnDelete(DeleteBehavior.Restrict); // Cascade delete on Student
 
             modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Subject) // Mối quan hệ 1-n với Subject
+                .HasOne(b => b.Subject) // 1-n relationship with Subject
                 .WithMany(s => s.Bookings)
                 .HasForeignKey(b => b.SubjectId)
-                .OnDelete(DeleteBehavior.Cascade); // Nếu Subject bị xóa, xóa luôn các Booking liên quan
+                .OnDelete(DeleteBehavior.Restrict); // Cascade delete on Subject
 
             modelBuilder.Entity<Booking>()
-                .HasOne(b => b.TutorSubject) // Mối quan hệ với TutorSubject
+                .HasOne(b => b.TutorSubject) // 1-n relationship with TutorSubject
                 .WithMany(ts => ts.Bookings)
-                .HasForeignKey(b => new { b.TutorId, b.SubjectId }) // Khóa ngoại ghép
-                .OnDelete(DeleteBehavior.Cascade); // Nếu TutorSubject bị xóa, xóa luôn các Booking liên quan
-
+                .HasForeignKey(b => new { b.TutorId, b.SubjectId }) // Composite foreign key
+                .OnDelete(DeleteBehavior.Restrict); // Restrict delete on TutorSubject to prevent multiple cascade paths
+          
 
             ///////////////////////////////////////////////////////// 
 

@@ -211,6 +211,30 @@ namespace OnDemandTutor.API.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        //tạo mặc định
+        [HttpPost("create-default-roles")]
+        public async Task<IActionResult> CreateDefaultRoles(string createdBy)
+        {
+            if (string.IsNullOrEmpty(createdBy))
+            {
+                return BadRequest("Created by information is required.");
+            }
+
+            // Các role mặc định
+            var roles = new[] { "user", "moderator", "admin", "student", "tutor" };
+
+            foreach (var role in roles)
+            {
+                var result = await _userService.AddRoleAsync(role, createdBy);
+
+                if (!result)
+                {
+                    return BadRequest($"Role '{role}' already exists.");
+                }
+            }
+
+            return Ok("Default roles created successfully.");
+        }
         //[HttpGet("signin-google")]
         //public IActionResult SignInWithGoogle()
         //{

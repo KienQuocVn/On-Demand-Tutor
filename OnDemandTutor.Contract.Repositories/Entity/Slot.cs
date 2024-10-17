@@ -22,6 +22,7 @@ namespace OnDemandTutor.Contract.Repositories.Entity
         public virtual Class Class { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
         public virtual ICollection<Feedback> Feedbacks { get; set; }
+        public virtual ICollection<Complaint> Complaints { get; set; }
 
     }
 }
